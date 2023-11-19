@@ -1,9 +1,13 @@
-mod clipboard_manager;
-mod generate_password;
+mod cmd;
+mod utils;
 
 use clap::{Args, Parser, Subcommand};
-use clipboard_manager::clipboard_manager;
-use generate_password::generate_password;
+
+use cmd::generate_password;
+use dialoguer::{Input, Password};
+use utils::clipboard_manager;
+
+use key::*;
 
 #[derive(Parser)]
 #[command(author="Chris P. <chrisdadev13@gmail.com>", version = "0.1.0", about = "🔒 A simple password/keys manager CLI", long_about = None)]
@@ -17,6 +21,8 @@ struct Cli {
 enum Commands {
     /// Generate a safe password/key
     Generate(GenerateArgs),
+    /// Save one of your passwords/keys
+    Save(SaveArgs),
 }
 
 #[derive(Args)]
@@ -32,8 +38,17 @@ struct GenerateArgs {
     uppercase: bool,
 }
 
+#[derive(Args)]
+struct SaveArgs {
+    /// Set the name of the password account
+    #[arg(short, long)]
+    name: String,
+}
+
 fn main() {
     let cli = Cli::parse();
+
+    let connection = &mut establish_connection();
 
     match &cli.command {
         Commands::Generate(args) => {
@@ -41,6 +56,28 @@ fn main() {
                 generate_password(args.length, args.numbers, args.symbols, args.uppercase);
 
             clipboard_manager(password)
+        }
+        Commands::Save(args) => {
+            let url: String = Input::new()
+                .with_prompt("Enter URL (optional)")
+                .interact_text()
+                .unwrap_or_default();
+            let password: String = Password::new()
+                .with_prompt("Enter Password")
+                .interact()
+                .unwrap();
+            let category: String = Input::new()
+                .with_prompt("Enter a Category (optional)")
+                .interact_text()
+                .unwrap_or_default();
+
+            create_credentials(
+                connection,
+                Some(url.as_str()),
+                args.name.as_str(),
+                password.as_str(),
+                Some(category.as_str()),
+            )
         }
     }
 }

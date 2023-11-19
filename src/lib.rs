@@ -37,5 +37,5 @@ pub fn create_credentials(
     diesel::insert_into(credentials::table)
         .values(&new_credential)
         .execute(conn)
-        .expect("Error saving credential");
+        .expect("Something bad happened during creation");
 }
