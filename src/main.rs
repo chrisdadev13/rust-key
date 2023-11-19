@@ -1,15 +1,9 @@
-use self::models::*;
-use diesel::prelude::*;
-use key::*;
+mod commands;
+
+use commands::cli;
+
+use clap::{arg, Command};
 
 fn main() {
-    use self::schema::credentials::dsl::*;
-
-    let connection = &mut establish_connection();
-    let results = credentials
-        .select(Credentials::as_select())
-        .load(connection)
-        .expect("Error loading credentials");
-
-    println!("It worked? {}", results.len());
+    let matches = cli().get_matches();
 }
